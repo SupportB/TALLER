@@ -1,218 +1,196 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>FORMULARIO INCIDENTES</title>
-<style>
-  body { font-family: Arial, sans-serif; margin: 20px; background:#f4f6f9; }
-  form { background:#fff; padding:18px; border-radius:10px; max-width:600px; margin:auto; box-shadow:0 2px 8px rgba(0,0,0,0.08); }
-  label{display:block;margin-top:10px;font-weight:600}
-  input, textarea { width:100%; padding:8px; margin-top:6px; border-radius:6px; border:1px solid #ccc; box-sizing:border-box; }
-  button{margin-top:14px;background:#007bff;color:#fff;padding:10px 14px;border-radius:6px;border:0;font-size:16px;cursor:pointer}
-  button[disabled]{opacity:.6;cursor:not-allowed}
-  #mensaje{margin-top:12px;font-weight:700;color:green;text-align:center}
-  #error{margin-top:8px;font-weight:700;color:#c00;text-align:center}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reporte de Evento</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #121212;
+      color: #fff;
+      padding: 20px;
+    }
+    form {
+      max-width: 500px;
+      margin: auto;
+      background: #1e1e1e;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(255,255,255,0.1);
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+    input, select, textarea, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border-radius: 8px;
+      border: none;
+      font-size: 15px;
+    }
+    button {
+      background: #25d366;
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+    button:hover {
+      background: #1ebe5d;
+    }
+  </style>
 </head>
 <body>
 
-<form id="eventoForm" onsubmit="return false;">
-  <label>Fecha:</label>
-  <input type="date" id="fecha" required>
+  <form id="formularioReporte">
+    <h2>📋 Reporte de Evento</h2>
 
-  <label>Hora:</label>
-  <input type="time" id="hora" required>
+    <label>Fecha del evento:</label>
+    <input type="date" id="fechaEvento" required>
 
-  <label>Placas:</label>
-  <input type="text" id="placas" required>
+    <label>Unidad:</label>
+    <input type="text" id="unidad">
 
-  <label>Unidad:</label>
-  <input type="text" id="unidad" required>
+    <label>Gerente:</label>
+    <input type="text" id="gerente">
 
-  <label>Gerente:</label>
-  <input type="text" id="gerente" required>
+    <label>Driver:</label>
+    <input type="text" id="driver">
 
-  <label>Driver:</label>
-  <input type="text" id="driver" required>
+    <label>Teléfono:</label>
+    <input type="tel" id="telefono">
 
-  <label>Teléfono Driver:</label>
-  <input type="text" id="telefonoDriver" required>
+    <label>Tienda:</label>
+    <input type="text" id="tienda">
 
-  <label>Proyecto:</label>
-  <input type="text" id="proyecto" required>
+    <label>Ciudad / Alcaldía:</label>
+    <input type="text" id="ciudad">
 
-  <label>Tienda:</label>
-  <input type="text" id="tienda" required>
+    <label>Proyecto:</label>
+    <input type="text" id="proyecto">
 
-  <label>Estado:</label>
-  <input type="text" id="estado" required>
+    <label>Seguro:</label>
+    <select id="seguro">
+      <option value="Sí">Sí</option>
+      <option value="No">No</option>
+    </select>
 
-  <label>Ciudad:</label>
-  <input type="text" id="ciudad" required>
+    <label>Descripción:</label>
+    <textarea id="descripcion" rows="3"></textarea>
 
-  <label><input type="checkbox" id="requiereSeguro"> Requiere seguro</label>
+    <button type="button" onclick="enviarDatos()">📤 Generar folio y enviar</button>
+  </form>
 
-  <label>Descripción:</label>
-  <textarea id="descripcion" rows="4"></textarea>
+  <script>
+    // ================= FUNCIONES PRINCIPALES =================
 
-  <button id="enviarBtn" type="button">Enviar reporte (WhatsApp)</button>
+    function generarFolio() {
+      const random = Math.floor(Math.random() * 9999).toString().padStart(4, "0");
+      return `FOL-${random}`;
+    }
 
-  <p id="mensaje"></p>
-  <p id="error"></p>
-</form>
+    async function enviarDatos() {
+      const folio = generarFolio();
+      const fechaEvento = document.getElementById("fechaEvento").value;
+      const unidad = document.getElementById("unidad").value;
+      const gerente = document.getElementById("gerente").value;
+      const driver = document.getElementById("driver").value;
+      const telefono = document.getElementById("telefono").value;
+      const tienda = document.getElementById("tienda").value;
+      const ciudad = document.getElementById("ciudad").value;
+      const proyecto = document.getElementById("proyecto").value;
+      const seguro = document.getElementById("seguro").value;
+      const descripcion = document.getElementById("descripcion").value;
 
-<script>
-/* CONFIGURA: reemplaza con tu endpoint SheetDB si aplica */
-const SHEETDB_URL = "https://sheetdb.io/api/v1/2nam4r8p6zvef"; // <-- reemplaza si hace falta
+      // Fecha y hora de envío
+      const fechaEnvio = new Date();
+      const enviado = fechaEnvio.toLocaleString("es-MX", { dateStyle: "short", timeStyle: "medium" });
 
-// Helper: toma valor y si está vacío devuelve '-'
-function valOrDash(id) {
-  const el = document.getElementById(id);
-  if (!el) return "-";
-  const v = (el.type === "checkbox") ? (el.checked ? "Sí" : "No") : (el.value || "").trim();
-  return v === "" ? "-" : v;
-}
+      // 🟩 RESUMEN DE WHATSAPP
+      const resumen = `📋 *Reporte de Evento*\n\n` +
+        `🧾 *Folio:* ${folio}\n` +
+        `📅 *Fecha del evento:* ${fechaEvento || "No especificada"}\n` +
+        `⏰ *Enviado:* ${enviado}\n\n` +
+        `🚗 *Unidad:* ${unidad || "-"}\n` +
+        `👨‍💼 *Gerente:* ${gerente || "-"}\n` +
+        `👷‍♂️ *Driver:* ${driver || "-"}\n` +
+        `📞 *Tel:* ${telefono || "-"}\n` +
+        `🏪 *Tienda:* ${tienda || "-"}\n` +
+        `📍 *Ciudad:* ${ciudad || "-"}\n` +
+        `📁 *Proyecto:* ${proyecto || "-"}\n` +
+        `🛡️ *Seguro:* ${seguro}\n\n` +
+        `📝 *Descripción:*\n${descripcion || "(sin descripción)"}\n`;
 
-// Generar folio robusto (tolerante a formatos de respuesta)
-async function generarFolio() {
-  try {
-    const res = await fetch(SHEETDB_URL);
-    if (!res.ok) return "FOL-0001";
-    const data = await res.json();
-    let rows = [];
-    if (Array.isArray(data)) rows = data;
-    else if (data && Array.isArray(data.data)) rows = data.data;
-    else rows = [];
-    if (rows.length === 0) return "FOL-0001";
-    for (let i = rows.length - 1; i >= 0; i--) {
-      const r = rows[i];
-      const fol = r && (r.folio || r.Folio || r.FOLIO) ? (r.folio || r.Folio || r.FOLIO) : null;
-      if (fol && typeof fol === "string") {
-        const parts = fol.split("-");
-        const numPart = parts[1] ? parts[1].replace(/\D/g, "") : null;
-        const num = numPart ? parseInt(numPart,10) : NaN;
-        if (!isNaN(num)) return `FOL-${(num+1).toString().padStart(4,"0")}`;
+      // 🟨 Envío a Google Sheets (opcional)
+      // const formData = new FormData();
+      // formData.append("folio", folio);
+      // formData.append("fechaEvento", fechaEvento);
+      // formData.append("unidad", unidad);
+      // formData.append("gerente", gerente);
+      // formData.append("driver", driver);
+      // formData.append("telefono", telefono);
+      // formData.append("tienda", tienda);
+      // formData.append("ciudad", ciudad);
+      // formData.append("proyecto", proyecto);
+      // formData.append("seguro", seguro);
+      // formData.append("descripcion", descripcion);
+      // formData.append("fechaEnvio", enviado);
+      // await fetch("TU_URL_DE_GOOGLE_APPS_SCRIPT", { method: "POST", body: formData });
+
+      alert(`✅ Reporte generado correctamente.\n\nFolio asignado: ${folio}`);
+
+      // Abrir WhatsApp con fallback
+      await abrirWhatsAppConFallback(resumen);
+    }
+
+    // ================= FUNCIÓN DE ENVÍO A WHATSAPP (CON FALLBACK iOS/ANDROID) =================
+
+    async function abrirWhatsAppConFallback(resumen) {
+      const encoded = encodeURIComponent(resumen);
+      const appUrl = `whatsapp://send?text=${encoded}`;
+      const webUrl = `https://api.whatsapp.com/send?text=${encoded}`;
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const isAndroid = /Android/.test(navigator.userAgent);
+
+      try {
+        if (isIOS) {
+          window.location.href = appUrl;
+          setTimeout(() => window.open(webUrl, "_blank"), 1200);
+          return;
+        }
+        if (isAndroid) {
+          const win = window.open(appUrl, "_blank");
+          setTimeout(() => {
+            if (!win) window.open(webUrl, "_blank");
+          }, 900);
+          return;
+        }
+        window.open(webUrl, "_blank");
+      } catch (err) {
+        console.warn("Error WhatsApp:", err);
+        try {
+          await copiarAlPortapapeles(resumen);
+          alert("📋 Mensaje copiado. Abriendo WhatsApp...");
+        } catch {
+          alert("No se pudo copiar. Pega el mensaje manualmente.");
+        }
+        window.open(webUrl, "_blank");
       }
     }
-    return "FOL-0001";
-  } catch (err) {
-    console.error("generarFolio:", err);
-    return "FOL-0001";
-  }
-}
 
-// Construye el resumen (con campos garantizados)
-function construirResumen(form) {
-  const folio = form.folio;
-  // usamos valOrDash para garantizar que no queden vacíos
-  const fechaEvento = valOrDash("fecha");
-  const horaEvento = valOrDash("hora");
-  const placas = valOrDash("placas");
-  const unidad = valOrDash("unidad");
-  const gerente = valOrDash("gerente");
-  const driver = valOrDash("driver");
-  const telefono = valOrDash("telefonoDriver");
-  const tienda = valOrDash("tienda");
-  const ciudad = valOrDash("ciudad");
-  const estado = valOrDash("estado");
-  const proyecto = valOrDash("proyecto");
-  const seguro = valOrDash("requiereSeguro");
-  const descripcion = valOrDash("descripcion");
-
-  const fechaEnvio = form.fecha_envio;
-  const horaEnvio = form.hora_envio;
-
-  // Formato final (sin caracteres extraños que a veces se muestran)
-  const lines = [
-    "📋 Reporte de Evento",
-    `🆔 Folio: ${folio}`,
-    `📅 Fecha del evento: ${fechaEvento} ${horaEvento}`,
-    `🕒 Enviado: ${fechaEnvio} ${horaEnvio}`,
-    `🚛 Unidad: ${unidad} (${placas})`,
-    `👨‍💼 Gerente: ${gerente}`,
-    `👨‍✈️ Driver: ${driver}`,
-    `📞 Tel: ${telefono}`,
-    `🏪 Tienda: ${tienda}`,
-    `📍 ${ciudad}, ${estado}`,
-    `📦 Proyecto: ${proyecto}`,
-    `🛡️ Seguro: ${seguro}`,
-    `🗒️ Descripción: ${descripcion}`
-  ];
-  return lines.join("\n");
-}
-
-// Envía a SheetDB y abre WhatsApp con el resumen listo
-async function enviarDatos() {
-  const btn = document.getElementById("enviarBtn");
-  const mensajeEl = document.getElementById("mensaje");
-  const errorEl = document.getElementById("error");
-  mensajeEl.textContent = "";
-  errorEl.textContent = "";
-  btn.disabled = true;
-
-  try {
-    // Generar folio
-    const folio = await generarFolio();
-
-    // Fecha/hora de envío en zona CDMX (texto)
-    const ahora = new Date();
-    const fecha_envio = ahora.toLocaleDateString("es-MX", { timeZone: "America/Mexico_City" });
-    const hora_envio = ahora.toLocaleTimeString("es-MX", { timeZone: "America/Mexico_City", hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" });
-    const fecha_hora_envio_iso = new Date(ahora.toLocaleString("en-US", { timeZone: "America/Mexico_City" })).toISOString();
-
-    // Construir objeto para guardar
-    const payload = {
-      folio,
-      fecha: valOrDash("fecha"),
-      hora: valOrDash("hora"),
-      placas: valOrDash("placas"),
-      unidad: valOrDash("unidad"),
-      gerente: valOrDash("gerente"),
-      driver: valOrDash("driver"),
-      telefonoDriver: valOrDash("telefonoDriver"),
-      proyecto: valOrDash("proyecto"),
-      tienda: valOrDash("tienda"),
-      estado: valOrDash("estado"),
-      ciudad: valOrDash("ciudad"),
-      requiereSeguro: valOrDash("requiereSeguro"),
-      descripcion: valOrDash("descripcion"),
-      fecha_envio,
-      hora_envio,
-      fecha_hora_envio_iso
-    };
-
-    // Guardar en SheetDB (si no quieres guardar, comenta este bloque)
-    const res = await fetch(SHEETDB_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ data: [payload] })
-    });
-    if (!res.ok) {
-      const txt = await res.text().catch(()=>"");
-      console.warn("SheetDB returned non-ok:", res.status, txt);
-      // no lanzamos error obligatorio; igual procedemos a abrir WhatsApp con el resumen.
+    async function copiarAlPortapapeles(texto) {
+      if (navigator.clipboard) return navigator.clipboard.writeText(texto);
+      const ta = document.createElement("textarea");
+      ta.value = texto;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
     }
-
-    // Construir resumen completamente relleno
-    const resumen = construirResumen({ ...payload, folio, fecha_envio, hora_envio });
-
-    // Mostrar confirmación en la página
-    mensajeEl.textContent = `✅ Folio ${folio} registrado. Resumen listo para WhatsApp.`;
-
-    // Abrir WhatsApp con mensaje prellenado (selector general)
-    const texto = encodeURIComponent(resumen);
-    window.open(`https://wa.me/?text=${texto}`, "_blank");
-
-  } catch (err) {
-    console.error("Error enviarDatos:", err);
-    errorEl.textContent = "❌ Ocurrió un error. Revisa la consola para más detalles.";
-  } finally {
-    setTimeout(()=> btn.disabled = false, 800);
-  }
-}
-
-document.getElementById("enviarBtn").addEventListener("click", enviarDatos);
-</script>
+  </script>
 </body>
 </html>
+
