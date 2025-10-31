@@ -7,39 +7,47 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #121212;
-      color: #fff;
+      background: #f0f4f8;
+      color: #222;
       padding: 20px;
     }
     form {
       max-width: 500px;
       margin: auto;
-      background: #1e1e1e;
-      padding: 20px;
+      background: #ffffff;
+      padding: 25px;
       border-radius: 12px;
-      box-shadow: 0 0 10px rgba(255,255,255,0.1);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+      color: #0077b6;
     }
     label {
       display: block;
       margin-top: 10px;
+      font-weight: bold;
     }
     input, select, textarea, button {
       width: 100%;
       padding: 10px;
       margin-top: 5px;
       border-radius: 8px;
-      border: none;
+      border: 1px solid #ccc;
       font-size: 15px;
+      background-color: #f9fafb;
     }
     button {
-      background: #25d366;
+      background: #0077b6;
       color: #fff;
       font-weight: bold;
       cursor: pointer;
       margin-top: 15px;
+      border: none;
+      transition: background 0.3s;
     }
     button:hover {
-      background: #1ebe5d;
+      background: #005b8f;
     }
   </style>
 </head>
@@ -50,6 +58,9 @@
 
     <label>Fecha del evento:</label>
     <input type="date" id="fechaEvento" required>
+
+    <label>Hora del suceso:</label>
+    <input type="time" id="horaEvento" required>
 
     <label>Unidad:</label>
     <input type="text" id="unidad">
@@ -75,7 +86,7 @@
     <label>Seguro:</label>
     <select id="seguro">
       <option value="Sí">Sí</option>
-      <option value="No">No</option>
+      <option value="No" selected>No</option>
     </select>
 
     <label>Descripción:</label>
@@ -85,16 +96,17 @@
   </form>
 
   <script>
-    // ================= FUNCIONES PRINCIPALES =================
-
+    // Generar folio aleatorio
     function generarFolio() {
       const random = Math.floor(Math.random() * 9999).toString().padStart(4, "0");
       return `FOL-${random}`;
     }
 
+    // Enviar datos y abrir WhatsApp
     async function enviarDatos() {
       const folio = generarFolio();
       const fechaEvento = document.getElementById("fechaEvento").value;
+      const horaEvento = document.getElementById("horaEvento").value;
       const unidad = document.getElementById("unidad").value;
       const gerente = document.getElementById("gerente").value;
       const driver = document.getElementById("driver").value;
@@ -105,14 +117,15 @@
       const seguro = document.getElementById("seguro").value;
       const descripcion = document.getElementById("descripcion").value;
 
-      // Fecha y hora de envío
+      // Fecha y hora del envío
       const fechaEnvio = new Date();
       const enviado = fechaEnvio.toLocaleString("es-MX", { dateStyle: "short", timeStyle: "medium" });
 
-      // 🟩 RESUMEN DE WHATSAPP
+      // Resumen del mensaje
       const resumen = `📋 *Reporte de Evento*\n\n` +
         `🧾 *Folio:* ${folio}\n` +
         `📅 *Fecha del evento:* ${fechaEvento || "No especificada"}\n` +
+        `🕒 *Hora del suceso:* ${horaEvento || "No indicada"}\n` +
         `⏰ *Enviado:* ${enviado}\n\n` +
         `🚗 *Unidad:* ${unidad || "-"}\n` +
         `👨‍💼 *Gerente:* ${gerente || "-"}\n` +
@@ -124,30 +137,12 @@
         `🛡️ *Seguro:* ${seguro}\n\n` +
         `📝 *Descripción:*\n${descripcion || "(sin descripción)"}\n`;
 
-      // 🟨 Envío a Google Sheets (opcional)
-      // const formData = new FormData();
-      // formData.append("folio", folio);
-      // formData.append("fechaEvento", fechaEvento);
-      // formData.append("unidad", unidad);
-      // formData.append("gerente", gerente);
-      // formData.append("driver", driver);
-      // formData.append("telefono", telefono);
-      // formData.append("tienda", tienda);
-      // formData.append("ciudad", ciudad);
-      // formData.append("proyecto", proyecto);
-      // formData.append("seguro", seguro);
-      // formData.append("descripcion", descripcion);
-      // formData.append("fechaEnvio", enviado);
-      // await fetch("TU_URL_DE_GOOGLE_APPS_SCRIPT", { method: "POST", body: formData });
+      alert(`✅ Reporte generado.\n\nFolio asignado: ${folio}`);
 
-      alert(`✅ Reporte generado correctamente.\n\nFolio asignado: ${folio}`);
-
-      // Abrir WhatsApp con fallback
       await abrirWhatsAppConFallback(resumen);
     }
 
-    // ================= FUNCIÓN DE ENVÍO A WHATSAPP (CON FALLBACK iOS/ANDROID) =================
-
+    // Envío a WhatsApp con compatibilidad para Android/iOS/Web
     async function abrirWhatsAppConFallback(resumen) {
       const encoded = encodeURIComponent(resumen);
       const appUrl = `whatsapp://send?text=${encoded}`;
@@ -171,12 +166,8 @@
         window.open(webUrl, "_blank");
       } catch (err) {
         console.warn("Error WhatsApp:", err);
-        try {
-          await copiarAlPortapapeles(resumen);
-          alert("📋 Mensaje copiado. Abriendo WhatsApp...");
-        } catch {
-          alert("No se pudo copiar. Pega el mensaje manualmente.");
-        }
+        await copiarAlPortapapeles(resumen);
+        alert("📋 Mensaje copiado. Abriendo WhatsApp...");
         window.open(webUrl, "_blank");
       }
     }
@@ -193,4 +184,3 @@
   </script>
 </body>
 </html>
-
