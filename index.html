@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Reporte de Evento</title>
+  <title>Reporte de Evento — Sheets + WhatsApp (móvil y desktop)</title>
   <style>
     body { font-family: Arial, sans-serif; background:#f0f4f8; color:#222; padding:20px; }
     form { max-width:640px; margin:auto; background:#fff; padding:24px; border-radius:10px; box-shadow:0 6px 20px rgba(0,0,0,0.08); }
     label{display:block;margin-top:12px;font-weight:700}
     input,select,textarea,button{width:100%;padding:10px;margin-top:6px;border-radius:8px;border:1px solid #ccc;font-size:15px;background:#fbfcfd}
-    .row{display:flex;gap:10px;}
+    .row{display:flex;gap:10px}
     .row>*{flex:1}
     button{background:#0077b6;color:#fff;border:0;cursor:pointer;font-weight:700}
     button[disabled]{opacity:0.6;cursor:not-allowed}
@@ -32,46 +32,27 @@
       </div>
     </div>
 
-    <label>🚗 Unidad</label>
-    <input type="text" id="unidad">
-
-    <label>👨‍💼 Gerente</label>
-    <input type="text" id="gerente">
-
-    <label>👷‍♂️ Driver</label>
-    <input type="text" id="driver">
-
-    <label>📞 Teléfono</label>
-    <input type="tel" id="telefono">
-
-    <label>🏪 Tienda</label>
-    <input type="text" id="tienda">
-
-    <label>📍 Ciudad / Alcaldía</label>
-    <input type="text" id="ciudad_alcaldia">
-
-    <label>📁 Proyecto</label>
-    <input type="text" id="proyecto">
-
+    <label>🚗 Unidad</label><input type="text" id="unidad">
+    <label>👨‍💼 Gerente</label><input type="text" id="gerente">
+    <label>👷‍♂️ Driver</label><input type="text" id="driver">
+    <label>📞 Teléfono</label><input type="tel" id="telefono">
+    <label>🏪 Tienda</label><input type="text" id="tienda">
+    <label>📍 Ciudad / Alcaldía</label><input type="text" id="ciudad_alcaldia">
+    <label>📁 Proyecto</label><input type="text" id="proyecto">
     <label>🛡️ Seguro</label>
-    <select id="seguro">
-      <option value="Sí">Sí</option>
-      <option value="No" selected>No</option>
-    </select>
+    <select id="seguro"><option value="Sí">Sí</option><option value="No" selected>No</option></select>
+    <label>📝 Descripción</label><textarea id="descripcion" rows="3"></textarea>
 
-    <label>📝 Descripción</label>
-    <textarea id="descripcion" rows="3"></textarea>
-
-    <button id="botonEnviar" type="button">📤 Generar folio y enviar</button>
+    <button id="botonEnviar" type="button">📤 Generar folio, guardar y abrir WhatsApp</button>
     <div id="status" role="status"></div>
   </form>
 
 <script>
-/* ---------------- CONFIGURA ---------------- */
-const SHEETDB_URL = "https://sheetdb.io/api/v1/2nam4r8p6zvef"; // pega aquí tu endpoint SheetDB si tienes (ej: "https://sheetdb.io/api/v1/xxxx")
-/* ------------------------------------------- */
+/* --------- CONFIGURA: pega aquí tu endpoint SheetDB si aplica --------- */
+const SHEETDB_URL = "https://sheetdb.io/api/v1/2nam4r8p6zvef"; // ejemplo: "https://sheetdb.io/api/v1/xxxxxx"
+/* -------------------------------------------------------------------- */
 
-/* --- Helpers folio (robustos) --- */
+/* --- Helpers folio --- */
 function extraerNumeroDesdeValor(valor) {
   if (!valor) return 0;
   const s = String(valor).trim();
@@ -81,8 +62,7 @@ function extraerNumeroDesdeValor(valor) {
   return Number.isFinite(n) ? n : 0;
 }
 function leerUltimoFolioNumero() {
-  const raw = localStorage.getItem("ultimoFolio");
-  return extraerNumeroDesdeValor(raw);
+  return extraerNumeroDesdeValor(localStorage.getItem("ultimoFolio"));
 }
 function confirmarFolioGuardado(numero) {
   const n = Number(numero) || 0;
@@ -94,61 +74,72 @@ function obtenerSiguienteFolioPropuesto() {
   return `FOL-${String(siguiente).padStart(4, "0")}`;
 }
 
-/* --- Util UI --- */
-function vCampo(id) {
-  const el = document.getElementById(id);
-  return el ? (el.value || "").trim() : "";
+/* --- Util --- */
+function vCampo(id){ const el = document.getElementById(id); return el ? (el.value || "").trim() : ""; }
+function esDispositivoMovil() {
+  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 }
 
-/* --- Construir mensaje WhatsApp (interno) --- */
+/* --- Construir texto para WhatsApp --- */
 function construirResumenParaWhatsApp(datos) {
   return [
-    "📋 *Reporte de Evento*",
+    "📋 Reporte de Evento",
     "",
-    `🧾 *Folio:* ${datos.folio}`,
-    `📅 *Fecha evento:* ${datos.fechaEvento || "(no indicada)"}`,
-    `🕒 *Hora suceso:* ${datos.horaEvento || "(no indicada)"}`,
-    `⏰ *Registrado:* ${datos.fechaHoraEnvio}`,
+    `🧾 Folio: ${datos.folio}`,
+    `📅 Fecha evento: ${datos.fechaEvento || "(no indicada)"}`,
+    `🕒 Hora suceso: ${datos.horaEvento || "(no indicada)"}`,
+    `⏰ Registrado: ${datos.fechaHoraEnvio}`,
     "",
-    `🚗 *Unidad:* ${datos.unidad || "-"}`,
-    `👨‍💼 *Gerente:* ${datos.gerente || "-"}`,
-    `👷‍♂️ *Driver:* ${datos.driver || "-"}`,
-    `📞 *Tel:* ${datos.telefono || "-"}`,
-    `🏪 *Tienda:* ${datos.tienda || "-"}`,
-    `📍 *Ciudad/Alcaldía:* ${datos.ciudad_alcaldia || "-"}`,
-    `📁 *Proyecto:* ${datos.proyecto || "-"}`,
-    `🛡️ *Seguro:* ${datos.seguro || "-"}`,
+    `🚗 Unidad: ${datos.unidad || "-"}`,
+    `👨‍💼 Gerente: ${datos.gerente || "-"}`,
+    `👷‍♂️ Driver: ${datos.driver || "-"}`,
+    `📞 Tel: ${datos.telefono || "-"}`,
+    `🏪 Tienda: ${datos.tienda || "-"}`,
+    `📍 Ciudad/Alcaldía: ${datos.ciudad_alcaldia || "-"}`,
+    `📁 Proyecto: ${datos.proyecto || "-"}`,
+    `🛡️ Seguro: ${datos.seguro || "-"}`,
     "",
-    `📝 *Descripción:*`,
+    `📝 Descripción:`,
     `${datos.descripcion || "-"}`
   ].join("\n");
 }
 
-/* --- Abrir WhatsApp (web) --- */
-async function abrirWhatsAppConResumen(resumen) {
-  const encoded = encodeURIComponent(resumen);
-  const url = `https://api.whatsapp.com/send?text=${encoded}`;
-  window.open(url, "_blank");
+/* --- Copiar al portapapeles (fallback) --- */
+async function copiarAlPortapapeles(texto) {
+  if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(texto);
+  const ta = document.createElement("textarea"); ta.value = texto; document.body.appendChild(ta); ta.select();
+  document.execCommand("copy"); document.body.removeChild(ta);
 }
 
-/* --- Handler principal --- */
+/* --- Enviar payload mediante sendBeacon (si disponible) --- */
+function enviarConBeacon(url, payloadObj) {
+  try {
+    const blob = new Blob([JSON.stringify(payloadObj)], { type: "application/json" });
+    return navigator.sendBeacon(url, blob);
+  } catch (e) {
+    console.warn("sendBeacon no disponible o falló:", e);
+    return false;
+  }
+}
+
+/* --- CLICK handler --- */
 document.getElementById("botonEnviar").addEventListener("click", async function () {
   const btn = this;
   const status = document.getElementById("status");
   btn.disabled = true;
   status.className = "";
-  status.textContent = "Generando folio y registrando...";
+  status.textContent = "Generando folio y preparando envío...";
 
   try {
-    // generar folio internamente (no visible)
+    // 1) Generar folio y preparar datos/resumen
     const folio = obtenerSiguienteFolioPropuesto();
     const ahora = new Date();
-    const fechaHoraEnvioISO = ahora.toISOString(); // ISO: recomendado para Sheets
-    // preparar datos (fecha/hora del evento vienen del input)
+    const fechaHoraEnvioISO = ahora.toISOString();
+
     const datos = {
       folio,
-      fechaEvento: vCampo("fechaEvento"),      // irá a columna fecha_evento
-      horaEvento: vCampo("horaEvento"),        // irá a columna hora_suceso
+      fechaEvento: vCampo("fechaEvento"),
+      horaEvento: vCampo("horaEvento"),
       unidad: vCampo("unidad"),
       gerente: vCampo("gerente"),
       driver: vCampo("driver"),
@@ -161,64 +152,165 @@ document.getElementById("botonEnviar").addEventListener("click", async function 
       fechaHoraEnvio: fechaHoraEnvioISO
     };
 
-    // Enviar a SheetDB (si está configurado) con los nombres exactos de columnas:
-    // folio,fecha_evento,hora_suceso,unidad,gerente,driver,telefono,tienda,ciudad_alcaldia,proyecto,seguro,descripcion,fecha_hora_envio
-    if (SHEETDB_URL && SHEETDB_URL.trim() !== "") {
-      const payload = { data: [ {
-        folio: datos.folio,
-        fecha_evento: datos.fechaEvento,
-        hora_suceso: datos.horaEvento,
-        unidad: datos.unidad,
-        gerente: datos.gerente,
-        driver: datos.driver,
-        telefono: datos.telefono,
-        tienda: datos.tienda,
-        ciudad_alcaldia: datos.ciudad_alcaldia,
-        proyecto: datos.proyecto,
-        seguro: datos.seguro,
-        descripcion: datos.descripcion,
-        fecha_hora_envio: datos.fechaHoraEnvio
-      } ] };
+    const resumen = construirResumenParaWhatsApp(datos);
+    const webUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(resumen)}`;
+    const appUrl = `whatsapp://send?text=${encodeURIComponent(resumen)}`;
 
-      try {
-        const res = await fetch(SHEETDB_URL, {
+    // 2) Si es desktop -> abrir ventana vacía (gesture) y luego fetch -> asignar url a esa ventana
+    if (!esDispositivoMovil()) {
+      let win = null;
+      try { win = window.open("", "_blank"); } catch (e) { win = null; }
+
+      // Hacemos fetch normalmente (await) para asegurar guardado antes de redirigir
+      let guardadoOK = false;
+      if (SHEETDB_URL && SHEETDB_URL.trim() !== "") {
+        const payload = { data: [ {
+          folio: datos.folio,
+          fecha_evento: datos.fechaEvento,
+          hora_suceso: datos.horaEvento,
+          unidad: datos.unidad,
+          gerente: datos.gerente,
+          driver: datos.driver,
+          telefono: datos.telefono,
+          tienda: datos.tienda,
+          ciudad_alcaldia: datos.ciudad_alcaldia,
+          proyecto: datos.proyecto,
+          seguro: datos.seguro,
+          descripcion: datos.descripcion,
+          fecha_hora_envio: datos.fechaHoraEnvio
+        } ] };
+
+        try {
+          const res = await fetch(SHEETDB_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+          if (!res.ok) {
+            const cuerpo = await res.text().catch(()=>"");
+            throw new Error("SheetDB error: " + res.status + " " + cuerpo);
+          }
+          guardadoOK = true;
+        } catch (err) {
+          console.error("Error guardando en SheetDB:", err);
+          guardadoOK = false;
+        }
+      }
+
+      // reservar folio localmente
+      confirmarFolioGuardado(leerUltimoFolioNumero() + 1);
+
+      // status
+      if (guardadoOK) {
+        status.className = "ok";
+        status.textContent = `✅ Reporte guardado (Folio ${folio}). Abriendo WhatsApp...`;
+      } else {
+        status.className = "info";
+        status.textContent = `ℹ️ Reporte preparado (Folio ${folio}). Abriendo WhatsApp...`;
+      }
+
+      // abrir WhatsApp en la ventana creada
+      if (win) {
+        try {
+          win.location = appUrl;
+          setTimeout(()=>{ try{ if (win && !win.closed) win.location = webUrl; }catch(e){console.warn(e);} }, 900);
+        } catch(e) {
+          try { win.location = webUrl; } catch(e2){ console.warn(e2); }
+        }
+      } else {
+        // si popup bloqueado, fallback: copiar y abrir web en nueva pestaña si posible
+        try {
+          await copiarAlPortapapeles(resumen);
+          alert("Se copió el resumen al portapapeles. Pega el texto en WhatsApp para enviar.");
+        } catch(e) {
+          try { window.open(webUrl, "_blank"); } catch(e2){ console.warn(e2); }
+        }
+      }
+
+    } else {
+      // 3) MÓVIL: abrimos app de whatsapp inmediatamente y usamos sendBeacon o fetch no bloqueante
+      // Intentar enviar con sendBeacon (ideal en mobile)
+      let beaconOk = false;
+      if (SHEETDB_URL && SHEETDB_URL.trim() !== "" && navigator.sendBeacon) {
+        const payload = {
+          data: [ {
+            folio: datos.folio,
+            fecha_evento: datos.fechaEvento,
+            hora_suceso: datos.horaEvento,
+            unidad: datos.unidad,
+            gerente: datos.gerente,
+            driver: datos.driver,
+            telefono: datos.telefono,
+            tienda: datos.tienda,
+            ciudad_alcaldia: datos.ciudad_alcaldia,
+            proyecto: datos.proyecto,
+            seguro: datos.seguro,
+            descripcion: datos.descripcion,
+            fecha_hora_envio: datos.fechaHoraEnvio
+          } ]
+        };
+        try {
+          beaconOk = enviarConBeacon(SHEETDB_URL, payload);
+        } catch(e){ beaconOk = false; }
+      }
+
+      // Si no hubo beacon, hacemos fetch "no bloqueante" (no await) — best-effort
+      if (!beaconOk && SHEETDB_URL && SHEETDB_URL.trim() !== "") {
+        const payload = { data: [ {
+          folio: datos.folio,
+          fecha_evento: datos.fechaEvento,
+          hora_suceso: datos.horaEvento,
+          unidad: datos.unidad,
+          gerente: datos.gerente,
+          driver: datos.driver,
+          telefono: datos.telefono,
+          tienda: datos.tienda,
+          ciudad_alcaldia: datos.ciudad_alcaldia,
+          proyecto: datos.proyecto,
+          seguro: datos.seguro,
+          descripcion: datos.descripcion,
+          fecha_hora_envio: datos.fechaHoraEnvio
+        } ] };
+        // fire-and-forget
+        fetch(SHEETDB_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
-        });
-        if (!res.ok) {
-          const cuerpo = await res.text().catch(()=>"");
-          throw new Error("SheetDB error: " + res.status + " " + cuerpo);
-        }
-        status.className = "ok";
-        status.textContent = `✅ Reporte enviado (Folio ${folio}) y guardado en servidor.`;
-      } catch (err) {
-        console.error("Error guardando en SheetDB:", err);
-        status.className = "info";
-        status.textContent = `ℹ️ Reporte preparado con folio ${folio} (no se guardó en servidor).`;
+        }).then(r => {
+          if (!r.ok) console.warn("SheetDB returned non-ok on mobile:", r.status);
+        }).catch(e => console.warn("Mobile fetch error (may be aborted if user leaves):", e));
       }
-    } else {
-      // No hay SheetDB configurado -> reservamos folio localmente y avisamos
+
+      // reservar folio localmente
+      confirmarFolioGuardado(leerUltimoFolioNumero() + 1);
+
       status.className = "info";
-      status.textContent = `ℹ️ Reporte preparado con folio ${folio} (no hay endpoint configurado).`;
+      status.textContent = `ℹ️ Abriendo WhatsApp. Folio: ${folio}`;
+
+      // Abrir la app de WhatsApp (preferible en móvil)
+      try {
+        // Primer intento: intentar abrir app
+        window.location.href = appUrl;
+        // Después de breve timeout forzamos fallback a web (si la app no abre)
+        setTimeout(() => {
+          try { window.location.href = webUrl; } catch(e){ console.warn(e); }
+        }, 900);
+      } catch (e) {
+        // fallback
+        try { window.location.href = webUrl; } catch(e2){ console.warn(e2); }
+      }
     }
-
-    // reservar folio localmente (evita repetición en este navegador)
-    confirmarFolioGuardado(leerUltimoFolioNumero() + 1);
-
-    // preparar y abrir WhatsApp (el resumen incluye fecha/hora de envío interna)
-    const resumen = construirResumenParaWhatsApp(datos);
-    await abrirWhatsAppConResumen(resumen);
 
   } catch (fatal) {
     console.error("Error en proceso:", fatal);
     status.className = "err";
-    status.textContent = "❌ Ocurrió un error inesperado. Revisa la consola.";
+    status.textContent = "❌ Ocurrió un error. Revisa la consola.";
   } finally {
-    setTimeout(() => { btn.disabled = false; }, 900);
+    setTimeout(()=>{ btn.disabled = false; }, 900);
   }
 });
 </script>
 </body>
 </html>
+
 
