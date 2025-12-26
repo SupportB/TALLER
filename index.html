@@ -1,146 +1,537 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Reporte de Evento — Sheets + WhatsApp (móvil y desktop)</title>
-  <style>
-    body { font-family: Arial, sans-serif; background:#f0f4f8; color:#222; padding:20px; }
-    form { max-width:640px; margin:auto; background:#fff; padding:24px; border-radius:10px; box-shadow:0 6px 20px rgba(0,0,0,0.08); }
-    label{display:block;margin-top:12px;font-weight:700}
-    input,select,textarea,button{width:100%;padding:10px;margin-top:6px;border-radius:8px;border:1px solid #ccc;font-size:15px;background:#fbfcfd}
-    .row{display:flex;gap:10px}
-    .row>*{flex:1}
-    button{background:#0077b6;color:#fff;border:0;cursor:pointer;font-weight:700}
-    button[disabled]{opacity:0.6;cursor:not-allowed}
-    #status{margin-top:12px;font-weight:700;text-align:center}
-    #status.ok{color:green} #status.err{color:#c00} #status.info{color:#444}
-  </style>
-</head>
-<body>
-  <form id="formReporte" onsubmit="return false;">
-    <h2 style="text-align:center;color:#0077b6">📋 Reporte de Evento</h2>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Reporte de Eventos - Taller Mecánico</title>
 
-    <div class="row">
-      <div>
-        <label>📅 Fecha del evento</label>
-        <input type="date" id="fechaEvento" required>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bet-green: #80B50A;
+  --bet-green-dark: #6FA009;
+  --bet-border: #5F8C08;
+}
+
+body {
+  font-family: 'Roboto','Arial',sans-serif;
+  background: #ffffff;
+  min-height: 100vh;
+  padding: 40px 20px;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 2px,
+    rgba(128,181,10,.05) 2px,
+    rgba(128,181,10,.05) 4px
+  );
+  pointer-events: none;
+}
+
+.container {
+  max-width: 900px;
+  margin: auto;
+}
+
+/* HEADER */
+.header {
+  background: linear-gradient(135deg, var(--bet-green), var(--bet-green-dark));
+  border: 3px solid var(--bet-border);
+  border-radius: 12px 12px 0 0;
+  padding: 28px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 8px 32px rgba(128,181,10,.35);
+}
+
+.header h1 {
+  color: #fff;
+  font-size: 26px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.header p {
+  color: #fff;
+  font-size: 14px;
+  opacity: .95;
+}
+
+.header img {
+  height: 55px;
+  background: #fff;
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+/* FORM */
+form {
+  background: #ffffff;
+  padding: 40px;
+  border-radius: 0 0 12px 12px;
+  border: 3px solid var(--bet-border);
+  border-top: none;
+}
+
+.form-section {
+  background: #f9f9f9;
+  padding: 24px;
+  border-radius: 8px;
+  margin-bottom: 28px;
+  border-left: 4px solid var(--bet-green);
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--bet-green);
+  margin-bottom: 18px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #ddd;
+  text-transform: uppercase;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(250px,1fr));
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+label {
+  color: var(--bet-green);
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+input, select, textarea {
+  padding: 12px;
+  border-radius: 6px;
+  border: 2px solid #ccc;
+  font-size: 15px;
+  background: #fff;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--bet-green);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(128,181,10,.2);
+}
+
+input[type="file"] {
+  border: 2px dashed var(--bet-green);
+  color: var(--bet-green);
+}
+
+textarea { min-height: 100px; }
+
+/* PROGRESS */
+.upload-progress {
+  display: none;
+  margin-top: 20px;
+  padding: 20px;
+  border-radius: 8px;
+  border: 2px solid var(--bet-green);
+  background: #f1f8e9;
+}
+
+.progress-label,
+.progress-text {
+  color: var(--bet-green);
+  font-weight: 600;
+  text-align: center;
+}
+
+.progress-bar-container {
+  height: 12px;
+  background: #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 10px 0;
+}
+
+.progress-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--bet-green), var(--bet-green-dark));
+  transition: width 0.3s ease;
+}
+
+/* BUTTONS */
+.btn-primary {
+  width: 100%;
+  padding: 18px;
+  background: linear-gradient(135deg, var(--bet-green), var(--bet-green-dark));
+  color: #fff;
+  font-size: 18px;
+  font-weight: 900;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(128,181,10,.5);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  border: 2px solid var(--bet-green);
+  color: var(--bet-green);
+  background: transparent;
+  padding: 12px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin: 5px;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+  background: var(--bet-green);
+  color: #fff;
+}
+
+/* FOLIO */
+.folio-card {
+  display: none;
+  margin-top: 24px;
+  padding: 32px;
+  border-radius: 12px;
+  border: 3px solid var(--bet-green);
+  background: #f9f9f9;
+  text-align: center;
+}
+
+.folio-card h3 {
+  color: var(--bet-green);
+  font-size: 20px;
+  margin-bottom: 10px;
+}
+
+.folio-number {
+  font-size: 42px;
+  font-weight: 900;
+  color: var(--bet-green-dark);
+  margin: 16px 0;
+  letter-spacing: 3px;
+}
+
+.folio-actions {
+  margin: 20px 0;
+}
+
+.folio-note {
+  margin-top: 15px;
+  font-size: 14px;
+  color: #666;
+}
+
+/* STATUS */
+.status-message {
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  text-align: center;
+  display: none;
+}
+
+.status-message.success {
+  display: block;
+  background: #e8f5e9;
+  border: 2px solid var(--bet-green);
+  color: var(--bet-green-dark);
+}
+
+.status-message.error {
+  display: block;
+  background: #fdecea;
+  border: 2px solid #c62828;
+  color: #c62828;
+}
+
+.status-message.info {
+  display: block;
+  background: #e3f2fd;
+  border: 2px solid #1565c0;
+  color: #1565c0;
+}
+
+@media (max-width:640px) {
+  .header { flex-direction: column; gap: 16px; }
+  body { padding: 20px 10px; }
+  form { padding: 20px; }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>🔧 Reporte de Eventos - Taller Mecánico</h1>
+  </div>
+
+  <form id="formReporte">
+    
+    <div class="form-section">
+      <div class="section-title">
+        <span>📅</span> Información del Evento
       </div>
-      <div>
-        <label>🕒 Hora del suceso</label>
-        <input type="time" id="horaEvento" required>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="fechaEvento">Fecha del evento *</label>
+          <input type="date" id="fechaEvento" name="fechaEvento" required>
+        </div>
+        <div class="form-group">
+          <label for="horaEvento">Hora del suceso *</label>
+          <input type="time" id="horaEvento" name="horaEvento" required>
+        </div>
       </div>
     </div>
 
-    <label>🚗 Unidad</label><input type="text" id="unidad">
-    <label>👨‍💼 Gerente</label><input type="text" id="gerente">
-    <label>👷‍♂️ Driver</label><input type="text" id="driver">
-    <label>📞 Teléfono</label><input type="tel" id="telefono">
-    <label>🏪 Tienda</label><input type="text" id="tienda">
-    <label>📍 Ciudad / Alcaldía</label><input type="text" id="ciudad_alcaldia">
-    <label>📁 Proyecto</label><input type="text" id="proyecto">
-    <label>🛡️ Seguro</label>
-    <select id="seguro"><option value="Sí">Sí</option><option value="No" selected>No</option></select>
-    <label>📝 Descripción</label><textarea id="descripcion" rows="3"></textarea>
+    <div class="form-section">
+      <div class="section-title">
+        <span>🚗</span> Información de la Unidad
+      </div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="placa">Placa</label>
+          <input type="text" id="placa" name="placa" placeholder="Ej: UNI001">
+        </div>
+        <div class="form-group">
+          <label for="marca_y_submarca">Marca y Submarca</label>
+          <input type="text" id="marca_y_submarca" name="marca_y_submarca" placeholder="Ej: Renault Kangoo">
+        </div>
+      </div>
+    </div>
 
-    <button id="botonEnviar" type="button">📤 Generar folio, guardar y abrir WhatsApp</button>
-    <div id="status" role="status"></div>
+    <div class="form-section">
+      <div class="section-title">
+        <span>👥</span> Responsables
+      </div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="gerente">Gerente</label>
+          <input type="text" id="gerente" name="gerente" placeholder="Nombre del gerente">
+        </div>
+        <div class="form-group">
+          <label for="driver">Driver</label>
+          <input type="text" id="driver" name="driver" placeholder="Nombre del conductor">
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="telefono">Teléfono de contacto</label>
+        <input type="tel" id="telefono" name="telefono" placeholder="55 1234 5678">
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="section-title">
+        <span>📍</span> Ubicación
+      </div>
+      
+      <div class="form-group">
+        <label for="proyecto">Proyecto</label>
+        <input type="text" id="proyecto" name="proyecto" placeholder="Nombre del proyecto">
+      </div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="tienda">Tienda</label>
+          <input type="text" id="tienda" name="tienda" placeholder="Nombre de la tienda">
+        </div>
+        <div class="form-group">
+          <label for="ciudad_alcaldia">Ciudad / Alcaldía</label>
+          <input type="text" id="ciudad_alcaldia" name="ciudad_alcaldia" placeholder="Ubicación">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="section-title">
+        <span>📝</span> Detalles del Reporte
+      </div>
+      
+      <div class="form-group">
+        <label for="seguro">¿Cuenta con seguro?</label>
+        <select id="seguro" name="seguro">
+          <option value="No" selected>No</option>
+          <option value="Sí">Sí</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label for="descripcion">Descripción del evento</label>
+        <textarea id="descripcion" name="descripcion" placeholder="Describa detalladamente lo sucedido..."></textarea>
+      </div>
+      
+      <div class="form-group">
+        <label for="evidencias">📸 Evidencias fotográficas (máx. 10)</label>
+        <input type="file" id="evidencias" name="evidencias[]" accept="image/*" multiple>
+      </div>
+    </div>
+
+    <div class="upload-progress" id="uploadProgress">
+      <div class="progress-label">Procesando evidencias...</div>
+      <div class="progress-bar-container">
+        <div class="progress-bar" id="uploadBar"></div>
+      </div>
+      <div class="progress-text" id="uploadPct">0%</div>
+    </div>
+
+    <button type="button" class="btn-primary" id="botonEnviar">
+      🚀 Generar Folio y Guardar en Google Sheets
+    </button>
+
+    <div class="status-message" id="status"></div>
+
+    <div class="folio-card" id="folioBox">
+      <h3>✅ Folio Asignado</h3>
+      <div class="folio-number" id="folioValue">FOL-0000</div>
+      
+      <div class="folio-actions">
+        <button type="button" class="btn-secondary" id="btnCopiarFolio">
+          📋 Copiar Folio
+        </button>
+        <button type="button" class="btn-secondary" id="btnAbrirWhatsApp">
+          💬 Enviar por WhatsApp
+        </button>
+      </div>
+      
+      <div class="folio-note">
+        El folio ha sido registrado en Google Sheets y la carpeta de evidencias se creó en Google Drive.
+      </div>
+    </div>
+
   </form>
+</div>
 
 <script>
-/* --------- CONFIGURA: pega aquí tu endpoint SheetDB si aplica --------- */
-const SHEETDB_URL = "https://sheetdb.io/api/v1/2nam4r8p6zvef"; // ejemplo: "https://sheetdb.io/api/v1/xxxxxx"
-/* -------------------------------------------------------------------- */
+// ============================================
+// CONFIGURACIÓN - PEGA AQUÍ TU URL DE GOOGLE APPS SCRIPT
+// ============================================
+const GOOGLE_WEBAPP = "https://script.google.com/macros/s/AKfycbxeJItwMif5RSbjR_6u1vBnEJhFqvXPtZFle24feAkPbCHlbgwA-iu3sJZB3pzaMm9S3w/exec";
 
-/* --- Helpers folio --- */
-function extraerNumeroDesdeValor(valor) {
-  if (!valor) return 0;
-  const s = String(valor).trim();
-  const m = s.match(/(\d+)$/);
-  if (m) return parseInt(m[1], 10) || 0;
-  const n = parseInt(s, 10);
-  return Number.isFinite(n) ? n : 0;
-}
-function leerUltimoFolioNumero() {
-  return extraerNumeroDesdeValor(localStorage.getItem("ultimoFolio"));
-}
-function confirmarFolioGuardado(numero) {
-  const n = Number(numero) || 0;
-  localStorage.setItem("ultimoFolio", String(n));
-}
-function obtenerSiguienteFolioPropuesto() {
-  const ultimo = leerUltimoFolioNumero();
-  const siguiente = ultimo + 1;
-  return `FOL-${String(siguiente).padStart(4, "0")}`;
+function vCampo(id) { 
+  return document.getElementById(id).value.trim(); 
 }
 
-/* --- Util --- */
-function vCampo(id){ const el = document.getElementById(id); return el ? (el.value || "").trim() : ""; }
-function esDispositivoMovil() {
-  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-}
-
-/* --- Construir texto para WhatsApp --- */
-function construirResumenParaWhatsApp(datos) {
+function construirResumenParaWhatsApp(d) {
   return [
-    "📋 Reporte de Evento",
+    "🔧 *REPORTE DE EVENTO - TALLER MECÁNICO*",
+    "═══════════════════════════════════",
     "",
-    `🧾 Folio: ${datos.folio}`,
-    `📅 Fecha evento: ${datos.fechaEvento || "(no indicada)"}`,
-    `🕒 Hora suceso: ${datos.horaEvento || "(no indicada)"}`,
-    `⏰ Registrado: ${datos.fechaHoraEnvio}`,
+    `🧾 *Folio:* ${d.folio}`,
+    `📅 *Fecha:* ${d.fecha_evento}`,
+    `🕐 *Hora:* ${d.hora_suceso}`,
     "",
-    `🚗 Unidad: ${datos.unidad || "-"}`,
-    `👨‍💼 Gerente: ${datos.gerente || "-"}`,
-    `👷‍♂️ Driver: ${datos.driver || "-"}`,
-    `📞 Tel: ${datos.telefono || "-"}`,
-    `🏪 Tienda: ${datos.tienda || "-"}`,
-    `📍 Ciudad/Alcaldía: ${datos.ciudad_alcaldia || "-"}`,
-    `📁 Proyecto: ${datos.proyecto || "-"}`,
-    `🛡️ Seguro: ${datos.seguro || "-"}`,
+    "🚗 *UNIDAD Y PROYECTO*",
+    `   Placa: ${d.placa}`,
+    `   Marca y submarca: ${d.marca_y_submarca}`,
     "",
-    `📝 Descripción:`,
-    `${datos.descripcion || "-"}`
+    "👥 *RESPONSABLES*",
+    `   Gerente: ${d.gerente}`,
+    `   Driver: ${d.driver}`,
+    `   Teléfono: ${d.telefono}`,
+    "",
+    "📍 *UBICACIÓN*",
+    `   Proyecto: ${d.proyecto}`,
+    `   Tienda: ${d.tienda}`,
+    `   Ciudad: ${d.ciudad_alcaldia}`,
+    "",
+    `🛡️ *Seguro:* ${d.seguro}`,
+    "",
+    "📝 *DESCRIPCIÓN:*",
+    d.descripcion,
+    "",
+    "═══════════════════════════════════",
+    `📸 Evidencias: ${d.num_imagenes} imagen(es)`,
+    "✅ Registrado en Google Sheets"
   ].join("\n");
 }
 
-/* --- Copiar al portapapeles (fallback) --- */
-async function copiarAlPortapapeles(texto) {
-  if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(texto);
-  const ta = document.createElement("textarea"); ta.value = texto; document.body.appendChild(ta); ta.select();
-  document.execCommand("copy"); document.body.removeChild(ta);
-}
+const btnEnviar = document.getElementById("botonEnviar");
+const statusEl = document.getElementById("status");
+const folioBox = document.getElementById("folioBox");
+const folioValue = document.getElementById("folioValue");
 
-/* --- Enviar payload mediante sendBeacon (si disponible) --- */
-function enviarConBeacon(url, payloadObj) {
-  try {
-    const blob = new Blob([JSON.stringify(payloadObj)], { type: "application/json" });
-    return navigator.sendBeacon(url, blob);
-  } catch (e) {
-    console.warn("sendBeacon no disponible o falló:", e);
-    return false;
+btnEnviar.onclick = async function() {
+  // Validar campos requeridos
+  if (!vCampo("fechaEvento") || !vCampo("horaEvento")) {
+    statusEl.className = "status-message error";
+    statusEl.textContent = "❌ Por favor complete la fecha y hora del evento";
+    return;
   }
-}
 
-/* --- CLICK handler --- */
-document.getElementById("botonEnviar").addEventListener("click", async function () {
-  const btn = this;
-  const status = document.getElementById("status");
-  btn.disabled = true;
-  status.className = "";
-  status.textContent = "Generando folio y preparando envío...";
+  btnEnviar.disabled = true;
+  folioBox.style.display = "none";
+  statusEl.className = "status-message info";
+  statusEl.textContent = "⏳ Procesando información...";
+
+  const fotos = [...document.getElementById("evidencias").files].slice(0, 10);
+  const prog = document.getElementById("uploadProgress");
+  const bar = document.getElementById("uploadBar");
+  const pct = document.getElementById("uploadPct");
+  
+  if (fotos.length > 0) {
+    prog.style.display = "block";
+    statusEl.textContent = "⏳ Procesando evidencias fotográficas...";
+  }
+
+  const evidencias = [];
+  try {
+    for (let i = 0; i < fotos.length; i++) {
+      const b64 = await toBase64(fotos[i]);
+      evidencias.push({
+        data: b64.split(",")[1],
+        tipo: fotos[i].type,
+        nombre: fotos[i].name
+      });
+      const p = Math.round(((i + 1) / fotos.length) * 100);
+      bar.style.width = p + "%";
+      pct.textContent = p + "%";
+    }
+  } catch (errorFoto) {
+    statusEl.className = "status-message error";
+    statusEl.textContent = "❌ Error al procesar las fotos. Intente nuevamente.";
+    btnEnviar.disabled = false;
+    prog.style.display = "none";
+    console.error("Error procesando fotos:", errorFoto);
+    return;
+  }
+
+  statusEl.textContent = "💾 Guardando en Google Sheets...";
 
   try {
-    // 1) Generar folio y preparar datos/resumen
-    const folio = obtenerSiguienteFolioPropuesto();
-    const ahora = new Date();
-    const fechaHoraEnvioISO = ahora.toISOString();
-
     const datos = {
-      folio,
-      fechaEvento: vCampo("fechaEvento"),
-      horaEvento: vCampo("horaEvento"),
-      unidad: vCampo("unidad"),
+      fecha_evento: vCampo("fechaEvento"),
+      hora_suceso: vCampo("horaEvento"),
+      placa: vCampo("placa"),
+      marca_y_submarca: vCampo("marca_y_submarca"),
       gerente: vCampo("gerente"),
       driver: vCampo("driver"),
       telefono: vCampo("telefono"),
@@ -149,168 +540,79 @@ document.getElementById("botonEnviar").addEventListener("click", async function 
       proyecto: vCampo("proyecto"),
       seguro: vCampo("seguro"),
       descripcion: vCampo("descripcion"),
-      fechaHoraEnvio: fechaHoraEnvioISO
+      evidencias: evidencias
     };
 
-    const resumen = construirResumenParaWhatsApp(datos);
-    const webUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(resumen)}`;
-    const appUrl = `whatsapp://send?text=${encodeURIComponent(resumen)}`;
+    console.log("Enviando a Google Sheets:", GOOGLE_WEBAPP);
+    console.log("Datos:", datos);
 
-    // 2) Si es desktop -> abrir ventana vacía (gesture) y luego fetch -> asignar url a esa ventana
-    if (!esDispositivoMovil()) {
-      let win = null;
-      try { win = window.open("", "_blank"); } catch (e) { win = null; }
-
-      // Hacemos fetch normalmente (await) para asegurar guardado antes de redirigir
-      let guardadoOK = false;
-      if (SHEETDB_URL && SHEETDB_URL.trim() !== "") {
-        const payload = { data: [ {
-          folio: datos.folio,
-          fecha_evento: datos.fechaEvento,
-          hora_suceso: datos.horaEvento,
-          unidad: datos.unidad,
-          gerente: datos.gerente,
-          driver: datos.driver,
-          telefono: datos.telefono,
-          tienda: datos.tienda,
-          ciudad_alcaldia: datos.ciudad_alcaldia,
-          proyecto: datos.proyecto,
-          seguro: datos.seguro,
-          descripcion: datos.descripcion,
-          fecha_hora_envio: datos.fechaHoraEnvio
-        } ] };
-
-        try {
-          const res = await fetch(SHEETDB_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-          });
-          if (!res.ok) {
-            const cuerpo = await res.text().catch(()=>"");
-            throw new Error("SheetDB error: " + res.status + " " + cuerpo);
-          }
-          guardadoOK = true;
-        } catch (err) {
-          console.error("Error guardando en SheetDB:", err);
-          guardadoOK = false;
-        }
-      }
-
-      // reservar folio localmente
-      confirmarFolioGuardado(leerUltimoFolioNumero() + 1);
-
-      // status
-      if (guardadoOK) {
-        status.className = "ok";
-        status.textContent = `✅ Reporte guardado (Folio ${folio}). Abriendo WhatsApp...`;
-      } else {
-        status.className = "info";
-        status.textContent = `ℹ️ Reporte preparado (Folio ${folio}). Abriendo WhatsApp...`;
-      }
-
-      // abrir WhatsApp en la ventana creada
-      if (win) {
-        try {
-          win.location = appUrl;
-          setTimeout(()=>{ try{ if (win && !win.closed) win.location = webUrl; }catch(e){console.warn(e);} }, 900);
-        } catch(e) {
-          try { win.location = webUrl; } catch(e2){ console.warn(e2); }
-        }
-      } else {
-        // si popup bloqueado, fallback: copiar y abrir web en nueva pestaña si posible
-        try {
-          await copiarAlPortapapeles(resumen);
-          alert("Se copió el resumen al portapapeles. Pega el texto en WhatsApp para enviar.");
-        } catch(e) {
-          try { window.open(webUrl, "_blank"); } catch(e2){ console.warn(e2); }
-        }
-      }
-
-    } else {
-      // 3) MÓVIL: abrimos app de whatsapp inmediatamente y usamos sendBeacon o fetch no bloqueante
-      // Intentar enviar con sendBeacon (ideal en mobile)
-      let beaconOk = false;
-      if (SHEETDB_URL && SHEETDB_URL.trim() !== "" && navigator.sendBeacon) {
-        const payload = {
-          data: [ {
-            folio: datos.folio,
-            fecha_evento: datos.fechaEvento,
-            hora_suceso: datos.horaEvento,
-            unidad: datos.unidad,
-            gerente: datos.gerente,
-            driver: datos.driver,
-            telefono: datos.telefono,
-            tienda: datos.tienda,
-            ciudad_alcaldia: datos.ciudad_alcaldia,
-            proyecto: datos.proyecto,
-            seguro: datos.seguro,
-            descripcion: datos.descripcion,
-            fecha_hora_envio: datos.fechaHoraEnvio
-          } ]
-        };
-        try {
-          beaconOk = enviarConBeacon(SHEETDB_URL, payload);
-        } catch(e){ beaconOk = false; }
-      }
-
-      // Si no hubo beacon, hacemos fetch "no bloqueante" (no await) — best-effort
-      if (!beaconOk && SHEETDB_URL && SHEETDB_URL.trim() !== "") {
-        const payload = { data: [ {
-          folio: datos.folio,
-          fecha_evento: datos.fechaEvento,
-          hora_suceso: datos.horaEvento,
-          unidad: datos.unidad,
-          gerente: datos.gerente,
-          driver: datos.driver,
-          telefono: datos.telefono,
-          tienda: datos.tienda,
-          ciudad_alcaldia: datos.ciudad_alcaldia,
-          proyecto: datos.proyecto,
-          seguro: datos.seguro,
-          descripcion: datos.descripcion,
-          fecha_hora_envio: datos.fechaHoraEnvio
-        } ] };
-        // fire-and-forget
-        fetch(SHEETDB_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        }).then(r => {
-          if (!r.ok) console.warn("SheetDB returned non-ok on mobile:", r.status);
-        }).catch(e => console.warn("Mobile fetch error (may be aborted if user leaves):", e));
-      }
-
-      // reservar folio localmente
-      confirmarFolioGuardado(leerUltimoFolioNumero() + 1);
-
-      status.className = "info";
-      status.textContent = `ℹ️ Abriendo WhatsApp. Folio: ${folio}`;
-
-      // Abrir la app de WhatsApp (preferible en móvil)
-      try {
-        // Primer intento: intentar abrir app
-        window.location.href = appUrl;
-        // Después de breve timeout forzamos fallback a web (si la app no abre)
-        setTimeout(() => {
-          try { window.location.href = webUrl; } catch(e){ console.warn(e); }
-        }, 900);
-      } catch (e) {
-        // fallback
-        try { window.location.href = webUrl; } catch(e2){ console.warn(e2); }
-      }
+    const response = await fetch(GOOGLE_WEBAPP, {
+      method: "POST",
+      headers: { 
+        "Content-Type": "text/plain"
+      },
+      body: JSON.stringify(datos),
+      redirect: 'follow'
+    });
+    
+    const responseText = await response.text();
+    console.log("Respuesta recibida:", responseText);
+    
+    const result = JSON.parse(responseText);
+    
+    if (result.status !== "success") {
+      throw new Error(result.message || "Error al procesar el reporte");
     }
 
-  } catch (fatal) {
-    console.error("Error en proceso:", fatal);
-    status.className = "err";
-    status.textContent = "❌ Ocurrió un error. Revisa la consola.";
-  } finally {
-    setTimeout(()=>{ btn.disabled = false; }, 900);
+    const folioFmt = result.folio;
+    folioValue.textContent = folioFmt;
+    folioBox.style.display = "block";
+
+    const resumen = construirResumenParaWhatsApp({
+      ...datos, 
+      folio: folioFmt,
+      num_imagenes: fotos.length
+    });
+    
+    document.getElementById("btnCopiarFolio").onclick = function() {
+      navigator.clipboard.writeText(folioFmt);
+      alert("✅ Folio copiado al portapapeles");
+    };
+    
+    document.getElementById("btnAbrirWhatsApp").onclick = function() {
+      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(resumen)}`, "_blank");
+    };
+
+    statusEl.className = "status-message success";
+    statusEl.textContent = `✅ Reporte guardado exitosamente en Google Sheets con folio ${folioFmt}`;
+    
+    prog.style.display = "none";
+    
+    setTimeout(() => {
+      if (confirm("¿Deseas crear otro reporte?")) {
+        location.reload();
+      }
+    }, 3000);
+
+  } catch (error) {
+    statusEl.className = "status-message error";
+    statusEl.textContent = "❌ Error: " + error.message;
+    btnEnviar.disabled = false;
+    prog.style.display = "none";
+    console.error("Error completo:", error);
+    console.error("Stack:", error.stack);
   }
-});
+};
+
+function toBase64(f) {
+  return new Promise((resolve, reject) => {
+    const fr = new FileReader();
+    fr.onload = () => resolve(fr.result);
+    fr.onerror = (error) => reject(error);
+    fr.readAsDataURL(f);
+  });
+}
 </script>
+
 </body>
 </html>
-
-
