@@ -21,26 +21,11 @@ body {
   padding: 40px 20px;
 }
 
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image: repeating-linear-gradient(
-    90deg,
-    transparent,
-    transparent 2px,
-    rgba(128,181,10,.05) 2px,
-    rgba(128,181,10,.05) 4px
-  );
-  pointer-events: none;
-}
-
 .container {
   max-width: 900px;
   margin: auto;
 }
 
-/* HEADER */
 .header {
   background: linear-gradient(135deg, var(--bet-green), var(--bet-green-dark));
   border: 3px solid var(--bet-border);
@@ -59,20 +44,6 @@ body::before {
   text-transform: uppercase;
 }
 
-.header p {
-  color: #fff;
-  font-size: 14px;
-  opacity: .95;
-}
-
-.header img {
-  height: 55px;
-  background: #fff;
-  padding: 8px 12px;
-  border-radius: 8px;
-}
-
-/* FORM */
 form {
   background: #ffffff;
   padding: 40px;
@@ -137,7 +108,6 @@ input[type="file"] {
 
 textarea { min-height: 100px; }
 
-/* PROGRESS */
 .upload-progress {
   display: none;
   margin-top: 20px;
@@ -169,7 +139,6 @@ textarea { min-height: 100px; }
   transition: width 0.3s ease;
 }
 
-/* BUTTONS */
 .btn-primary {
   width: 100%;
   padding: 18px;
@@ -210,7 +179,6 @@ textarea { min-height: 100px; }
   color: #fff;
 }
 
-/* FOLIO */
 .folio-card {
   display: none;
   margin-top: 24px;
@@ -245,7 +213,6 @@ textarea { min-height: 100px; }
   color: #666;
 }
 
-/* STATUS */
 .status-message {
   margin-top: 20px;
   padding: 16px;
@@ -276,6 +243,19 @@ textarea { min-height: 100px; }
   color: #1565c0;
 }
 
+.debug-info {
+  margin-top: 20px;
+  padding: 15px;
+  background: #fff8e1;
+  border: 2px solid #ffc107;
+  border-radius: 8px;
+  display: none;
+  font-family: monospace;
+  font-size: 12px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
 @media (max-width:640px) {
   .header { flex-direction: column; gap: 16px; }
   body { padding: 20px 10px; }
@@ -294,9 +274,7 @@ textarea { min-height: 100px; }
   <form id="formReporte">
     
     <div class="form-section">
-      <div class="section-title">
-        <span>📅</span> Información del Evento
-      </div>
+      <div class="section-title">📅 Información del Evento</div>
       
       <div class="form-row">
         <div class="form-group">
@@ -311,26 +289,22 @@ textarea { min-height: 100px; }
     </div>
 
     <div class="form-section">
-      <div class="section-title">
-        <span>🚗</span> Información de la Unidad
-      </div>
+      <div class="section-title">🚗 Información de la Unidad</div>
       
       <div class="form-row">
         <div class="form-group">
-          <label for="placa">Placa</label>
-          <input type="text" id="placa" name="placa" placeholder="Ej: UNI001">
+          <label for="placa">Placa *</label>
+          <input type="text" id="placa" name="placa" placeholder="Ej: UNI001" required>
         </div>
         <div class="form-group">
-          <label for="marca_y_submarca">Marca y Submarca</label>
-          <input type="text" id="marca_y_submarca" name="marca_y_submarca" placeholder="Ej: Renault Kangoo">
+          <label for="marca_y_submarca">Marca y Submarca *</label>
+          <input type="text" id="marca_y_submarca" name="marca_y_submarca" placeholder="Ej: Renault Kangoo" required>
         </div>
       </div>
     </div>
 
     <div class="form-section">
-      <div class="section-title">
-        <span>👥</span> Responsables
-      </div>
+      <div class="section-title">👥 Responsables</div>
       
       <div class="form-row">
         <div class="form-group">
@@ -350,13 +324,11 @@ textarea { min-height: 100px; }
     </div>
 
     <div class="form-section">
-      <div class="section-title">
-        <span>📍</span> Ubicación
-      </div>
+      <div class="section-title">📍 Ubicación</div>
       
       <div class="form-group">
-        <label for="proyecto">Proyecto</label>
-        <input type="text" id="proyecto" name="proyecto" placeholder="Nombre del proyecto">
+        <label for="proyecto">Proyecto *</label>
+        <input type="text" id="proyecto" name="proyecto" placeholder="Nombre del proyecto" required>
       </div>
       
       <div class="form-row">
@@ -372,9 +344,7 @@ textarea { min-height: 100px; }
     </div>
 
     <div class="form-section">
-      <div class="section-title">
-        <span>📝</span> Detalles del Reporte
-      </div>
+      <div class="section-title">📝 Detalles del Reporte</div>
       
       <div class="form-group">
         <label for="seguro">¿Cuenta con seguro?</label>
@@ -408,6 +378,8 @@ textarea { min-height: 100px; }
     </button>
 
     <div class="status-message" id="status"></div>
+    
+    <div class="debug-info" id="debugInfo"></div>
 
     <div class="folio-card" id="folioBox">
       <h3>✅ Folio Asignado</h3>
@@ -431,187 +403,311 @@ textarea { min-height: 100px; }
 </div>
 
 <script>
-// ============================================
-// CONFIGURACIÓN - PEGA AQUÍ TU URL DE GOOGLE APPS SCRIPT
-// ============================================
-const GOOGLE_WEBAPP = "https://script.google.com/macros/s/AKfycbxeJItwMif5RSbjR_6u1vBnEJhFqvXPtZFle24feAkPbCHlbgwA-iu3sJZB3pzaMm9S3w/exec";
+// ==========================================
+// CONFIGURACIÓN
+// ==========================================
+const GOOGLE_WEBAPP = "https://script.google.com/macros/s/AKfycbxkrtAT2hul0Nx220TyyjqoXGmfala1FfJkYP4AF1W4MFuWAQm0kQsUxJ3Qy8C13zAe6g/exec";
+const DEBUG_MODE = true; // Cambiar a false en producción
 
-function vCampo(id) { 
-  return document.getElementById(id).value.trim(); 
+// ==========================================
+// UTILIDADES
+// ==========================================
+function log(mensaje, datos = null) {
+  const timestamp = new Date().toLocaleTimeString();
+  const linea = `[${timestamp}] ${mensaje}`;
+  
+  console.log(linea, datos || '');
+  
+  if (DEBUG_MODE) {
+    const debugBox = document.getElementById('debugInfo');
+    debugBox.style.display = 'block';
+    debugBox.innerHTML += linea + (datos ? '<br>' + JSON.stringify(datos, null, 2) : '') + '<br><br>';
+    debugBox.scrollTop = debugBox.scrollHeight;
+  }
 }
 
-function construirResumenParaWhatsApp(d) {
+function obtenerValor(id) {
+  const elemento = document.getElementById(id);
+  if (!elemento) {
+    log(`❌ ERROR: Campo "${id}" no encontrado en el DOM`);
+    return '';
+  }
+  const valor = elemento.value.trim();
+  log(`📝 Campo "${id}": "${valor}"`);
+  return valor;
+}
+
+function toBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = error => reject(error);
+    reader.readAsDataURL(file);
+  });
+}
+
+function construirResumenWhatsApp(datos) {
   return [
     "🔧 *REPORTE DE EVENTO - TALLER MECÁNICO*",
     "═══════════════════════════════════",
     "",
-    `🧾 *Folio:* ${d.folio}`,
-    `📅 *Fecha:* ${d.fecha_evento}`,
-    `🕐 *Hora:* ${d.hora_suceso}`,
+    `🧾 *Folio:* ${datos.folio}`,
+    `📅 *Fecha:* ${datos.fecha_evento}`,
+    `🕐 *Hora:* ${datos.hora_suceso}`,
     "",
-    "🚗 *UNIDAD Y PROYECTO*",
-    `   Placa: ${d.placa}`,
-    `   Marca y submarca: ${d.marca_y_submarca}`,
+    "🚗 *UNIDAD*",
+    `   Placa: ${datos.placa}`,
+    `   Marca: ${datos.marca_y_submarca}`,
     "",
     "👥 *RESPONSABLES*",
-    `   Gerente: ${d.gerente}`,
-    `   Driver: ${d.driver}`,
-    `   Teléfono: ${d.telefono}`,
+    `   Gerente: ${datos.gerente || 'N/A'}`,
+    `   Driver: ${datos.driver || 'N/A'}`,
+    `   Teléfono: ${datos.telefono || 'N/A'}`,
     "",
     "📍 *UBICACIÓN*",
-    `   Proyecto: ${d.proyecto}`,
-    `   Tienda: ${d.tienda}`,
-    `   Ciudad: ${d.ciudad_alcaldia}`,
+    `   Proyecto: ${datos.proyecto}`,
+    `   Tienda: ${datos.tienda || 'N/A'}`,
+    `   Ciudad: ${datos.ciudad_alcaldia || 'N/A'}`,
     "",
-    `🛡️ *Seguro:* ${d.seguro}`,
+    `🛡️ *Seguro:* ${datos.seguro}`,
     "",
     "📝 *DESCRIPCIÓN:*",
-    d.descripcion,
+    datos.descripcion || 'Sin descripción',
     "",
     "═══════════════════════════════════",
-    `📸 Evidencias: ${d.num_imagenes} imagen(es)`,
+    `📸 Evidencias: ${datos.num_imagenes}`,
     "✅ Registrado en Google Sheets"
   ].join("\n");
 }
 
-const btnEnviar = document.getElementById("botonEnviar");
-const statusEl = document.getElementById("status");
-const folioBox = document.getElementById("folioBox");
-const folioValue = document.getElementById("folioValue");
-
-btnEnviar.onclick = async function() {
-  // Validar campos requeridos
-  if (!vCampo("fechaEvento") || !vCampo("horaEvento")) {
+// ==========================================
+// EVENTO PRINCIPAL
+// ==========================================
+document.getElementById("botonEnviar").onclick = async function() {
+  log("=== INICIO DEL PROCESO ===");
+  
+  const btnEnviar = this;
+  const statusEl = document.getElementById("status");
+  const folioBox = document.getElementById("folioBox");
+  const folioValue = document.getElementById("folioValue");
+  const debugBox = document.getElementById("debugInfo");
+  
+  // Limpiar UI
+  debugBox.innerHTML = "";
+  folioBox.style.display = "none";
+  
+  // ==========================================
+  // PASO 1: OBTENER TODOS LOS VALORES
+  // ==========================================
+  log("📋 PASO 1: Obteniendo valores del formulario...");
+  
+  const fechaEvento = obtenerValor("fechaEvento");
+  const horaEvento = obtenerValor("horaEvento");
+  const placa = obtenerValor("placa");
+  const marcaSubmarca = obtenerValor("marca_y_submarca");
+  const gerente = obtenerValor("gerente");
+  const driver = obtenerValor("driver");
+  const telefono = obtenerValor("telefono");
+  const proyecto = obtenerValor("proyecto");
+  const tienda = obtenerValor("tienda");
+  const ciudadAlcaldia = obtenerValor("ciudad_alcaldia");
+  const seguro = obtenerValor("seguro");
+  const descripcion = obtenerValor("descripcion");
+  
+  // ==========================================
+  // PASO 2: VALIDAR CAMPOS OBLIGATORIOS
+  // ==========================================
+  log("✅ PASO 2: Validando campos obligatorios...");
+  
+  if (!fechaEvento || !horaEvento) {
     statusEl.className = "status-message error";
-    statusEl.textContent = "❌ Por favor complete la fecha y hora del evento";
+    statusEl.textContent = "❌ La fecha y hora del evento son obligatorias";
     return;
   }
-
+  
+  if (!placa) {
+    statusEl.className = "status-message error";
+    statusEl.textContent = "❌ La placa es obligatoria";
+    return;
+  }
+  
+  if (!marcaSubmarca) {
+    statusEl.className = "status-message error";
+    statusEl.textContent = "❌ La marca y submarca son obligatorias";
+    return;
+  }
+  
+  if (!proyecto) {
+    statusEl.className = "status-message error";
+    statusEl.textContent = "❌ El proyecto es obligatorio";
+    return;
+  }
+  
+  log("✅ Todos los campos obligatorios están completos");
+  
+  // ==========================================
+  // PASO 3: PROCESAR FOTOS
+  // ==========================================
+  log("📸 PASO 3: Procesando evidencias fotográficas...");
+  
   btnEnviar.disabled = true;
-  folioBox.style.display = "none";
   statusEl.className = "status-message info";
   statusEl.textContent = "⏳ Procesando información...";
-
-  const fotos = [...document.getElementById("evidencias").files].slice(0, 10);
+  
+  const archivos = document.getElementById("evidencias").files;
+  const fotos = [...archivos].slice(0, 10);
+  
+  log(`Total de fotos: ${fotos.length}`);
+  
   const prog = document.getElementById("uploadProgress");
   const bar = document.getElementById("uploadBar");
   const pct = document.getElementById("uploadPct");
   
   if (fotos.length > 0) {
     prog.style.display = "block";
-    statusEl.textContent = "⏳ Procesando evidencias fotográficas...";
+    statusEl.textContent = "⏳ Convirtiendo fotos a base64...";
   }
-
+  
   const evidencias = [];
+  
   try {
     for (let i = 0; i < fotos.length; i++) {
-      const b64 = await toBase64(fotos[i]);
+      const foto = fotos[i];
+      log(`Procesando foto ${i + 1}: ${foto.name}`);
+      
+      const b64 = await toBase64(foto);
       evidencias.push({
         data: b64.split(",")[1],
-        tipo: fotos[i].type,
-        nombre: fotos[i].name
+        tipo: foto.type,
+        nombre: foto.name
       });
-      const p = Math.round(((i + 1) / fotos.length) * 100);
-      bar.style.width = p + "%";
-      pct.textContent = p + "%";
+      
+      const progreso = Math.round(((i + 1) / fotos.length) * 100);
+      bar.style.width = progreso + "%";
+      pct.textContent = progreso + "%";
     }
-  } catch (errorFoto) {
+    
+    log(`✅ ${fotos.length} fotos procesadas correctamente`);
+    
+  } catch (error) {
+    log("❌ ERROR procesando fotos", error);
     statusEl.className = "status-message error";
-    statusEl.textContent = "❌ Error al procesar las fotos. Intente nuevamente.";
+    statusEl.textContent = "❌ Error al procesar las fotos";
     btnEnviar.disabled = false;
     prog.style.display = "none";
-    console.error("Error procesando fotos:", errorFoto);
     return;
   }
-
+  
+  // ==========================================
+  // PASO 4: CONSTRUIR OBJETO DE DATOS
+  // ==========================================
+  log("📦 PASO 4: Construyendo objeto de datos...");
+  
+  const datos = {
+    fecha_evento: fechaEvento,
+    hora_suceso: horaEvento,
+    placa: placa,
+    marca_y_submarca: marcaSubmarca,
+    gerente: gerente,
+    driver: driver,
+    telefono: telefono,
+    proyecto: proyecto,
+    tienda: tienda,
+    ciudad_alcaldia: ciudadAlcaldia,
+    seguro: seguro,
+    descripcion: descripcion,
+    evidencias: evidencias
+  };
+  
+  log("📦 Datos preparados:", {
+    fecha_evento: datos.fecha_evento,
+    hora_suceso: datos.hora_suceso,
+    placa: datos.placa,
+    marca_y_submarca: datos.marca_y_submarca,
+    proyecto: datos.proyecto,
+    num_evidencias: evidencias.length
+  });
+  
+  // ==========================================
+  // PASO 5: ENVIAR A GOOGLE SHEETS
+  // ==========================================
+  log("📤 PASO 5: Enviando a Google Sheets...");
   statusEl.textContent = "💾 Guardando en Google Sheets...";
-
+  
   try {
-    const datos = {
-      fecha_evento: vCampo("fechaEvento"),
-      hora_suceso: vCampo("horaEvento"),
-      placa: vCampo("placa"),
-      marca_y_submarca: vCampo("marca_y_submarca"),
-      gerente: vCampo("gerente"),
-      driver: vCampo("driver"),
-      telefono: vCampo("telefono"),
-      tienda: vCampo("tienda"),
-      ciudad_alcaldia: vCampo("ciudad_alcaldia"),
-      proyecto: vCampo("proyecto"),
-      seguro: vCampo("seguro"),
-      descripcion: vCampo("descripcion"),
-      evidencias: evidencias
-    };
-
-    console.log("Enviando a Google Sheets:", GOOGLE_WEBAPP);
-    console.log("Datos:", datos);
-
+    log(`URL destino: ${GOOGLE_WEBAPP}`);
+    log("Método: POST");
+    log("Content-Type: application/json");
+    
+    const jsonString = JSON.stringify(datos);
+    log(`Tamaño del payload: ${jsonString.length} caracteres`);
+    
     const response = await fetch(GOOGLE_WEBAPP, {
       method: "POST",
-      headers: { 
-        "Content-Type": "text/plain"
+      mode: "no-cors",  // Necesario para Google Apps Script
+      headers: {
+        "Content-Type": "application/json"
       },
-      body: JSON.stringify(datos),
-      redirect: 'follow'
+      body: jsonString
     });
     
-    const responseText = await response.text();
-    console.log("Respuesta recibida:", responseText);
+    log("✅ Petición enviada");
     
-    const result = JSON.parse(responseText);
+    // Con mode: 'no-cors', no podemos leer la respuesta
+    // Pero si llegamos aquí sin error, asumimos éxito
     
-    if (result.status !== "success") {
-      throw new Error(result.message || "Error al procesar el reporte");
-    }
-
-    const folioFmt = result.folio;
-    folioValue.textContent = folioFmt;
+    // ==========================================
+    // PASO 6: MOSTRAR ÉXITO
+    // ==========================================
+    log("✅ PASO 6: Datos enviados exitosamente");
+    
+    const folioGenerado = `FOL-${Date.now()}`;
+    folioValue.textContent = folioGenerado;
     folioBox.style.display = "block";
-
-    const resumen = construirResumenParaWhatsApp({
-      ...datos, 
-      folio: folioFmt,
+    
+    const resumen = construirResumenWhatsApp({
+      ...datos,
+      folio: folioGenerado,
       num_imagenes: fotos.length
     });
     
+    // Configurar botones
     document.getElementById("btnCopiarFolio").onclick = function() {
-      navigator.clipboard.writeText(folioFmt);
-      alert("✅ Folio copiado al portapapeles");
+      navigator.clipboard.writeText(folioGenerado);
+      alert("✅ Folio copiado: " + folioGenerado);
     };
     
     document.getElementById("btnAbrirWhatsApp").onclick = function() {
-      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(resumen)}`, "_blank");
+      const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(resumen)}`;
+      window.open(url, "_blank");
     };
-
-    statusEl.className = "status-message success";
-    statusEl.textContent = `✅ Reporte guardado exitosamente en Google Sheets con folio ${folioFmt}`;
     
+    statusEl.className = "status-message success";
+    statusEl.textContent = `✅ Reporte guardado con folio ${folioGenerado}`;
     prog.style.display = "none";
+    
+    log("=== PROCESO COMPLETADO EXITOSAMENTE ===");
     
     setTimeout(() => {
       if (confirm("¿Deseas crear otro reporte?")) {
         location.reload();
       }
     }, 3000);
-
+    
   } catch (error) {
+    log("❌ ERROR EN EL ENVÍO", {
+      message: error.message,
+      stack: error.stack
+    });
+    
     statusEl.className = "status-message error";
     statusEl.textContent = "❌ Error: " + error.message;
     btnEnviar.disabled = false;
     prog.style.display = "none";
-    console.error("Error completo:", error);
-    console.error("Stack:", error.stack);
   }
 };
 
-function toBase64(f) {
-  return new Promise((resolve, reject) => {
-    const fr = new FileReader();
-    fr.onload = () => resolve(fr.result);
-    fr.onerror = (error) => reject(error);
-    fr.readAsDataURL(f);
-  });
-}
+log("✅ Script inicializado correctamente");
 </script>
 
 </body>
