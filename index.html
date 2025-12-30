@@ -31,9 +31,7 @@ body {
   border: 3px solid var(--bet-border);
   border-radius: 12px 12px 0 0;
   padding: 28px 32px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  text-align: center;
   box-shadow: 0 8px 32px rgba(128,181,10,.35);
 }
 
@@ -243,19 +241,6 @@ textarea { min-height: 100px; }
   color: #1565c0;
 }
 
-.debug-info {
-  margin-top: 20px;
-  padding: 15px;
-  background: #fff8e1;
-  border: 2px solid #ffc107;
-  border-radius: 8px;
-  display: none;
-  font-family: monospace;
-  font-size: 12px;
-  max-height: 400px;
-  overflow-y: auto;
-}
-
 @media (max-width:640px) {
   .header { flex-direction: column; gap: 16px; }
   body { padding: 20px 10px; }
@@ -378,8 +363,6 @@ textarea { min-height: 100px; }
     </button>
 
     <div class="status-message" id="status"></div>
-    
-    <div class="debug-info" id="debugInfo"></div>
 
     <div class="folio-card" id="folioBox">
       <h3>✅ Folio Asignado</h3>
@@ -406,300 +389,182 @@ textarea { min-height: 100px; }
 // ==========================================
 // CONFIGURACIÓN
 // ==========================================
-const GOOGLE_WEBAPP = "https://script.google.com/macros/s/AKfycbxkrtAT2hul0Nx220TyyjqoXGmfala1FfJkYP4AF1W4MFuWAQm0kQsUxJ3Qy8C13zAe6g/exec";
-const DEBUG_MODE = true; // Cambiar a false en producción
+const GOOGLE_WEBAPP = "https://script.google.com/macros/s/AKfycbxKEF2aEZCHl1b2Jxj0Z8_rAX4ls2q73xcZQavUsP1aMD0S_xxf1wQA8HxivOFXsuAuPw/exec";
 
-// ==========================================
-// UTILIDADES
-// ==========================================
-function log(mensaje, datos = null) {
-  const timestamp = new Date().toLocaleTimeString();
-  const linea = `[${timestamp}] ${mensaje}`;
-  
-  console.log(linea, datos || '');
-  
-  if (DEBUG_MODE) {
-    const debugBox = document.getElementById('debugInfo');
-    debugBox.style.display = 'block';
-    debugBox.innerHTML += linea + (datos ? '<br>' + JSON.stringify(datos, null, 2) : '') + '<br><br>';
-    debugBox.scrollTop = debugBox.scrollHeight;
-  }
+function vCampo(id) { 
+  const el = document.getElementById(id);
+  return el ? el.value.trim() : '';
 }
 
-function obtenerValor(id) {
-  const elemento = document.getElementById(id);
-  if (!elemento) {
-    log(`❌ ERROR: Campo "${id}" no encontrado en el DOM`);
-    return '';
-  }
-  const valor = elemento.value.trim();
-  log(`📝 Campo "${id}": "${valor}"`);
-  return valor;
-}
-
-function toBase64(file) {
+function toBase64(f) {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = error => reject(error);
-    reader.readAsDataURL(file);
+    const fr = new FileReader();
+    fr.onload = () => resolve(fr.result);
+    fr.onerror = reject;
+    fr.readAsDataURL(f);
   });
 }
 
-function construirResumenWhatsApp(datos) {
+function construirResumenParaWhatsApp(d) {
   return [
     "🔧 *REPORTE DE EVENTO - TALLER MECÁNICO*",
     "═══════════════════════════════════",
     "",
-    `🧾 *Folio:* ${datos.folio}`,
-    `📅 *Fecha:* ${datos.fecha_evento}`,
-    `🕐 *Hora:* ${datos.hora_suceso}`,
+    `🧾 *Folio:* ${d.folio}`,
+    `📅 *Fecha:* ${d.fecha_evento}`,
+    `🕐 *Hora:* ${d.hora_suceso}`,
     "",
     "🚗 *UNIDAD*",
-    `   Placa: ${datos.placa}`,
-    `   Marca: ${datos.marca_y_submarca}`,
+    `   Placa: ${d.placa}`,
+    `   Marca: ${d.marca_y_submarca}`,
     "",
     "👥 *RESPONSABLES*",
-    `   Gerente: ${datos.gerente || 'N/A'}`,
-    `   Driver: ${datos.driver || 'N/A'}`,
-    `   Teléfono: ${datos.telefono || 'N/A'}`,
+    `   Gerente: ${d.gerente || 'N/A'}`,
+    `   Driver: ${d.driver || 'N/A'}`,
+    `   Teléfono: ${d.telefono || 'N/A'}`,
     "",
     "📍 *UBICACIÓN*",
-    `   Proyecto: ${datos.proyecto}`,
-    `   Tienda: ${datos.tienda || 'N/A'}`,
-    `   Ciudad: ${datos.ciudad_alcaldia || 'N/A'}`,
+    `   Proyecto: ${d.proyecto}`,
+    `   Tienda: ${d.tienda || 'N/A'}`,
+    `   Ciudad: ${d.ciudad_alcaldia || 'N/A'}`,
     "",
-    `🛡️ *Seguro:* ${datos.seguro}`,
+    `🛡️ *Seguro:* ${d.seguro}`,
     "",
     "📝 *DESCRIPCIÓN:*",
-    datos.descripcion || 'Sin descripción',
+    d.descripcion || 'Sin descripción',
     "",
     "═══════════════════════════════════",
-    `📸 Evidencias: ${datos.num_imagenes}`,
+    `📸 Evidencias: ${d.num_imagenes}`,
     "✅ Registrado en Google Sheets"
   ].join("\n");
 }
 
-// ==========================================
-// EVENTO PRINCIPAL
-// ==========================================
-document.getElementById("botonEnviar").onclick = async function() {
-  log("=== INICIO DEL PROCESO ===");
+const btnEnviar = document.getElementById("botonEnviar");
+const statusEl = document.getElementById("status");
+const folioBox = document.getElementById("folioBox");
+const folioValue = document.getElementById("folioValue");
+
+btnEnviar.onclick = async function() {
+  console.log("=== INICIO ===");
   
-  const btnEnviar = this;
-  const statusEl = document.getElementById("status");
-  const folioBox = document.getElementById("folioBox");
-  const folioValue = document.getElementById("folioValue");
-  const debugBox = document.getElementById("debugInfo");
-  
-  // Limpiar UI
-  debugBox.innerHTML = "";
-  folioBox.style.display = "none";
-  
-  // ==========================================
-  // PASO 1: OBTENER TODOS LOS VALORES
-  // ==========================================
-  log("📋 PASO 1: Obteniendo valores del formulario...");
-  
-  const fechaEvento = obtenerValor("fechaEvento");
-  const horaEvento = obtenerValor("horaEvento");
-  const placa = obtenerValor("placa");
-  const marcaSubmarca = obtenerValor("marca_y_submarca");
-  const gerente = obtenerValor("gerente");
-  const driver = obtenerValor("driver");
-  const telefono = obtenerValor("telefono");
-  const proyecto = obtenerValor("proyecto");
-  const tienda = obtenerValor("tienda");
-  const ciudadAlcaldia = obtenerValor("ciudad_alcaldia");
-  const seguro = obtenerValor("seguro");
-  const descripcion = obtenerValor("descripcion");
-  
-  // ==========================================
-  // PASO 2: VALIDAR CAMPOS OBLIGATORIOS
-  // ==========================================
-  log("✅ PASO 2: Validando campos obligatorios...");
-  
-  if (!fechaEvento || !horaEvento) {
+  // Validar
+  if (!vCampo("fechaEvento") || !vCampo("horaEvento")) {
     statusEl.className = "status-message error";
-    statusEl.textContent = "❌ La fecha y hora del evento son obligatorias";
+    statusEl.textContent = "❌ La fecha y hora son obligatorias";
     return;
   }
   
-  if (!placa) {
+  if (!vCampo("placa") || !vCampo("marca_y_submarca") || !vCampo("proyecto")) {
     statusEl.className = "status-message error";
-    statusEl.textContent = "❌ La placa es obligatoria";
+    statusEl.textContent = "❌ Placa, Marca y Proyecto son obligatorios";
     return;
   }
-  
-  if (!marcaSubmarca) {
-    statusEl.className = "status-message error";
-    statusEl.textContent = "❌ La marca y submarca son obligatorias";
-    return;
-  }
-  
-  if (!proyecto) {
-    statusEl.className = "status-message error";
-    statusEl.textContent = "❌ El proyecto es obligatorio";
-    return;
-  }
-  
-  log("✅ Todos los campos obligatorios están completos");
-  
-  // ==========================================
-  // PASO 3: PROCESAR FOTOS
-  // ==========================================
-  log("📸 PASO 3: Procesando evidencias fotográficas...");
-  
+
   btnEnviar.disabled = true;
+  folioBox.style.display = "none";
   statusEl.className = "status-message info";
-  statusEl.textContent = "⏳ Procesando información...";
-  
-  const archivos = document.getElementById("evidencias").files;
-  const fotos = [...archivos].slice(0, 10);
-  
-  log(`Total de fotos: ${fotos.length}`);
-  
+  statusEl.textContent = "⏳ Procesando...";
+
+  const fotos = [...document.getElementById("evidencias").files].slice(0, 10);
   const prog = document.getElementById("uploadProgress");
   const bar = document.getElementById("uploadBar");
   const pct = document.getElementById("uploadPct");
   
   if (fotos.length > 0) {
     prog.style.display = "block";
-    statusEl.textContent = "⏳ Convirtiendo fotos a base64...";
   }
-  
+
   const evidencias = [];
-  
   try {
     for (let i = 0; i < fotos.length; i++) {
-      const foto = fotos[i];
-      log(`Procesando foto ${i + 1}: ${foto.name}`);
-      
-      const b64 = await toBase64(foto);
+      const b64 = await toBase64(fotos[i]);
       evidencias.push({
         data: b64.split(",")[1],
-        tipo: foto.type,
-        nombre: foto.name
+        tipo: fotos[i].type,
+        nombre: fotos[i].name
       });
-      
-      const progreso = Math.round(((i + 1) / fotos.length) * 100);
-      bar.style.width = progreso + "%";
-      pct.textContent = progreso + "%";
+      const p = Math.round(((i + 1) / fotos.length) * 100);
+      bar.style.width = p + "%";
+      pct.textContent = p + "%";
     }
-    
-    log(`✅ ${fotos.length} fotos procesadas correctamente`);
-    
-  } catch (error) {
-    log("❌ ERROR procesando fotos", error);
+  } catch (errorFoto) {
     statusEl.className = "status-message error";
-    statusEl.textContent = "❌ Error al procesar las fotos";
+    statusEl.textContent = "❌ Error procesando fotos";
     btnEnviar.disabled = false;
     prog.style.display = "none";
     return;
   }
-  
-  // ==========================================
-  // PASO 4: CONSTRUIR OBJETO DE DATOS
-  // ==========================================
-  log("📦 PASO 4: Construyendo objeto de datos...");
-  
-  const datos = {
-    fecha_evento: fechaEvento,
-    hora_suceso: horaEvento,
-    placa: placa,
-    marca_y_submarca: marcaSubmarca,
-    gerente: gerente,
-    driver: driver,
-    telefono: telefono,
-    proyecto: proyecto,
-    tienda: tienda,
-    ciudad_alcaldia: ciudadAlcaldia,
-    seguro: seguro,
-    descripcion: descripcion,
-    evidencias: evidencias
-  };
-  
-  log("📦 Datos preparados:", {
-    fecha_evento: datos.fecha_evento,
-    hora_suceso: datos.hora_suceso,
-    placa: datos.placa,
-    marca_y_submarca: datos.marca_y_submarca,
-    proyecto: datos.proyecto,
-    num_evidencias: evidencias.length
-  });
-  
-  // ==========================================
-  // PASO 5: ENVIAR A GOOGLE SHEETS
-  // ==========================================
-  log("📤 PASO 5: Enviando a Google Sheets...");
+
   statusEl.textContent = "💾 Guardando en Google Sheets...";
-  
+
   try {
-    log(`URL destino: ${GOOGLE_WEBAPP}`);
-    log("Método: POST");
-    log("Content-Type: application/json");
-    
-    const jsonString = JSON.stringify(datos);
-    log(`Tamaño del payload: ${jsonString.length} caracteres`);
-    
+    const datos = {
+      fecha_evento: vCampo("fechaEvento"),
+      hora_suceso: vCampo("horaEvento"),
+      placa: vCampo("placa"),
+      marca_y_submarca: vCampo("marca_y_submarca"),
+      gerente: vCampo("gerente"),
+      driver: vCampo("driver"),
+      telefono: vCampo("telefono"),
+      proyecto: vCampo("proyecto"),
+      tienda: vCampo("tienda"),
+      ciudad_alcaldia: vCampo("ciudad_alcaldia"),
+      seguro: vCampo("seguro"),
+      descripcion: vCampo("descripcion"),
+      evidencias: evidencias
+    };
+
+    console.log("Enviando datos...", datos);
+
+    // ENVÍO CON FETCH (sin no-cors para poder leer respuesta)
     const response = await fetch(GOOGLE_WEBAPP, {
       method: "POST",
-      mode: "no-cors",  // Necesario para Google Apps Script
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: jsonString
+      body: JSON.stringify(datos),
+      redirect: 'follow'
     });
     
-    log("✅ Petición enviada");
+    const texto = await response.text();
+    console.log("Respuesta:", texto);
     
-    // Con mode: 'no-cors', no podemos leer la respuesta
-    // Pero si llegamos aquí sin error, asumimos éxito
+    const result = JSON.parse(texto);
     
-    // ==========================================
-    // PASO 6: MOSTRAR ÉXITO
-    // ==========================================
-    log("✅ PASO 6: Datos enviados exitosamente");
+    if (result.status !== "success") {
+      throw new Error(result.message || "Error al guardar");
+    }
+
+    const folioFmt = result.folio || "FOL-000001";
+    console.log("Folio recibido:", folioFmt);
     
-    const folioGenerado = `FOL-${Date.now()}`;
-    folioValue.textContent = folioGenerado;
+    folioValue.textContent = folioFmt;
     folioBox.style.display = "block";
-    
-    const resumen = construirResumenWhatsApp({
-      ...datos,
-      folio: folioGenerado,
+
+    const resumen = construirResumenParaWhatsApp({
+      ...datos, 
+      folio: folioFmt,
       num_imagenes: fotos.length
     });
     
-    // Configurar botones
     document.getElementById("btnCopiarFolio").onclick = function() {
-      navigator.clipboard.writeText(folioGenerado);
-      alert("✅ Folio copiado: " + folioGenerado);
+      navigator.clipboard.writeText(folioFmt);
+      alert("✅ Folio copiado: " + folioFmt);
     };
     
     document.getElementById("btnAbrirWhatsApp").onclick = function() {
-      const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(resumen)}`;
-      window.open(url, "_blank");
+      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(resumen)}`, "_blank");
     };
-    
+
     statusEl.className = "status-message success";
-    statusEl.textContent = `✅ Reporte guardado con folio ${folioGenerado}`;
+    statusEl.textContent = `✅ Reporte guardado con folio ${folioFmt}`;
     prog.style.display = "none";
-    
-    log("=== PROCESO COMPLETADO EXITOSAMENTE ===");
     
     setTimeout(() => {
       if (confirm("¿Deseas crear otro reporte?")) {
         location.reload();
       }
     }, 3000);
-    
+
   } catch (error) {
-    log("❌ ERROR EN EL ENVÍO", {
-      message: error.message,
-      stack: error.stack
-    });
-    
+    console.error("ERROR:", error);
     statusEl.className = "status-message error";
     statusEl.textContent = "❌ Error: " + error.message;
     btnEnviar.disabled = false;
@@ -707,7 +572,7 @@ document.getElementById("botonEnviar").onclick = async function() {
   }
 };
 
-log("✅ Script inicializado correctamente");
+console.log("Script cargado");
 </script>
 
 </body>
